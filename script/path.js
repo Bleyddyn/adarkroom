@@ -58,6 +58,7 @@ var Path = {
 		Path.init();
 		Engine.event('progress', 'path');
 		Notifications.notify(Room, _('the compass points ' + World.dir));
+		Notifications.notify(Room, _('the smell of decay comes from the ' + World.swamp_dir));
 	},
 	
 	getWeight: function(thing) {
