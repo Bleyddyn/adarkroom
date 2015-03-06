@@ -63,7 +63,35 @@ Events.Outside = [
 			}
 		}
 	},
-
+	{
+		title: _('Fire'),
+		isAvailable: function() {
+			return Engine.activeModule == Outside && $SM.get('game.buildings["hut"]', true) > 0 && $SM.get('game.population', true) > 5;
+		},
+		scenes: {
+			'start': {
+				text: [
+					_('a fire rampages through one of the huts, destroying it.'),
+					_('all residents in the hut perished in the fire.')
+				],
+				notification: _('a fire has started'),
+				blink: true,
+				onLoad: function() {
+					var population = $SM.get('game.population', true);
+					var huts = $SM.get('game.buildings["hut"]', true);
+					$SM.set('game.buildings["hut"]', (huts - 1));
+					Outside.killVillagers(4);
+				},
+				buttons: {
+					'mourn': {
+						text: _('mourn'),
+						notification: _('some villagers have died'),
+						nextScene: 'end'
+					}
+				}
+			}
+		}
+	},
 	{ /* Sickness */
 		title: _('Sickness'),
 		isAvailable: function() {
@@ -133,6 +161,13 @@ Events.Outside = [
 				],
 				blink: true,
 				buttons: {
+					/* Because there is a serious need for medicine, the price is raised. */
+					'buyMedicine': {
+						text: _('buy medicine'),
+						cost: { 'scales': 70,
+								'teeth': 50 },
+						reward: { 'medicine': 1 }
+					},
 					'heal': {
 						text: _('5 medicine'),
 						cost: { 'medicine' : 5 },
@@ -216,7 +251,7 @@ Events.Outside = [
 	{ /* Soldier attack */
 		title: _('A Military Raid'),
 		isAvailable: function() {
-			return Engine.activeModule == Outside && $SM.get('game.population', true) > 0 && $SM.get('game.cityCleared');;
+			return Engine.activeModule == Outside && $SM.get('game.population', true) > 0 && $SM.get('game.cityCleared');
 		},
 		scenes: {
 			'start': {

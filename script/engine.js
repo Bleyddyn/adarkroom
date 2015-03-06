@@ -1,12 +1,6 @@
 (function() {
 	var Engine = window.Engine = {
 		
-		/* TODO *** MICHAEL IS A LAZY BASTARD AND DOES NOT WANT TO REFACTOR ***
-		 * Here is what he should be doing:
-		 * 	- All updating values (store numbers, incomes, etc...) should be objects that can register listeners to
-		 * 	  value-change events. These events should be fired whenever a value (or group of values, I suppose) is updated.
-		 * 	  That would be so elegant and awesome.
-		 */
 		SITE_URL: encodeURIComponent("http://adarkroom.doublespeakgames.com"),
 		VERSION: 1.3,
 		MAX_STORE: 99999999999999,
@@ -80,7 +74,8 @@
 			state: null,
 			debug: false,
 			log: false,
-			dropbox: false
+			dropbox: false,
+			doubleTime: false
 		},
 			
 		init: function(options) {
@@ -120,11 +115,11 @@
 					.addClass('customSelect')
 					.addClass('menuBtn')
 					.appendTo(menu);
-				var options = $('<span>')
+				var selectOptions = $('<span>')
 					.addClass('customSelectOptions')
 					.appendTo(customSelect);
 				var optionsList = $('<ul>')
-					.appendTo(options);
+					.appendTo(selectOptions);
 				$('<li>')
 					.text("language.")
 					.appendTo(optionsList);
@@ -143,7 +138,19 @@
 				.text(_('lights off.'))
 				.click(Engine.turnLightsOff)
 				.appendTo(menu);
-			
+
+			$('<span>')
+				.addClass('menuBtn')
+				.text(_('hyper.'))
+				.click(function(){
+					Engine.options.doubleTime = !Engine.options.doubleTime;
+					if(Engine.options.doubleTime)
+						$(this).text(_('classic.'));
+					else
+						$(this).text(_('hyper.'));
+				})
+				.appendTo(menu);
+
 			$('<span>')
 				.addClass('menuBtn')
 				.text(_('restart.'))
@@ -176,6 +183,12 @@
 				.addClass('menuBtn')
 				.text(_('app store.'))
 				.click(function() { window.open('https://itunes.apple.com/us/app/a-dark-room/id736683061'); })
+				.appendTo(menu);
+
+			$('<span>')
+				.addClass('menuBtn')
+				.text(_('github.'))
+				.click(function() { window.open('https://github.com/Continuities/adarkroom'); })
 				.appendTo(menu);
 			
 			// Register keypress handlers
@@ -339,7 +352,7 @@
 					}
 				}
 			});
-			Engine.autoSelect('#description textarea')
+			Engine.autoSelect('#description textarea');
 		},
 
 		import64: function(string64) {
@@ -462,7 +475,6 @@
 			var darkCss = Engine.findStylesheet('darkenLights');
 			if (darkCss == null) {
 				$('head').append('<link rel="stylesheet" href="css/dark.css" type="text/css" title="darkenLights" />');
-				Engine.turnLightsOff;
 				$('.lightsOff').text(_('lights on.'));
 			} else if (darkCss.disabled) {
 				darkCss.disabled = false;
@@ -496,7 +508,7 @@
 				var diff = Math.abs(panelIndex - currentIndex);
 				slider.animate({left: -(panelIndex * 700) + 'px'}, 300 * diff);
 
-				if($SM.get('stores.wood') != undefined) {
+				if($SM.get('stores.wood') !== undefined) {
 				// FIXME Why does this work if there's an animation queue...?
 					stores.animate({right: -(panelIndex * 700) + 'px'}, 300 * diff);
 				}
@@ -593,30 +605,42 @@
 				switch(e.which) {
 					case 38: // Up
 					case 87:
+						if(Engine.activeModule == Outside || Engine.activeModule == Path) {
+							Engine.activeModule.scrollSidebar('up');
+						}
 						Engine.log('up');
 						break;
 					case 40: // Down
 					case 83:
+						if (Engine.activeModule == Outside || Engine.activeModule == Path) {
+							Engine.activeModule.scrollSidebar('down');
+						}
 						Engine.log('down');
 						break;
 					case 37: // Left
 					case 65:
 						if(Engine.activeModule == Ship && Path.tab)
 							Engine.travelTo(Path);
-						else if(Engine.activeModule == Path && Outside.tab)
+						else if(Engine.activeModule == Path && Outside.tab){
+							Engine.activeModule.scrollSidebar('left', true);
 							Engine.travelTo(Outside);
-						else if(Engine.activeModule == Outside && Room.tab)
+						}else if(Engine.activeModule == Outside && Room.tab){
+							Engine.activeModule.scrollSidebar('left', true);
 							Engine.travelTo(Room);
+						}
 						Engine.log('left');
 						break;
 					case 39: // Right
 					case 68:
 						if(Engine.activeModule == Room && Outside.tab)
 							Engine.travelTo(Outside);
-						else if(Engine.activeModule == Outside && Path.tab)
+						else if(Engine.activeModule == Outside && Path.tab){
+							Engine.activeModule.scrollSidebar('right', true);
 							Engine.travelTo(Path);
-						else if(Engine.activeModule == Path && Ship.tab)
+						}else if(Engine.activeModule == Path && Ship.tab){
+							Engine.activeModule.scrollSidebar('right', true);
 							Engine.travelTo(Ship);
+						}
 						Engine.log('right');
 						break;
 				}
@@ -669,8 +693,8 @@
 	
 		switchLanguage: function(dom){
 			var lang = $(dom).data("language");
-			if(document.location.href.search(/[\?\&]lang=[a-z]+/) != -1){
-				document.location.href = document.location.href.replace( /([\?\&]lang=)([a-z]+)/gi , "$1"+lang );
+			if(document.location.href.search(/[\?\&]lang=[a-z_]+/) != -1){
+				document.location.href = document.location.href.replace( /([\?\&]lang=)([a-z_]+)/gi , "$1"+lang );
 			}else{
 				document.location.href = document.location.href + ( (document.location.href.search(/\?/) != -1 )?"&":"?") + "lang="+lang;
 			}
@@ -681,7 +705,19 @@
 			if(lang && typeof Storage != 'undefined' && localStorage) {
 				localStorage.lang = lang;
 			}
+		},
+
+		setTimeout: function(callback, timeout, skipDouble){
+
+			if( Engine.options.doubleTime && !skipDouble ){
+				Engine.log('Double time, cutting timeout in half');
+				timeout /= 2;
+			}
+
+			return setTimeout(callback, timeout);
+
 		}
+
 	};
 
 	function eventNullifier(e) {
@@ -693,6 +729,33 @@
 	}
 
 })();
+
+function inView(dir, elem){
+
+        var scTop = $('#main').offset().top;
+        var scBot = scTop + $('#main').height();
+
+        var elTop = elem.offset().top;
+        var elBot = elTop + elem.height();
+
+        if( dir == 'up' ){
+                // STOP MOVING IF BOTTOM OF ELEMENT IS VISIBLE IN SCREEN
+                return ( elBot < scBot );
+        }else if( dir == 'down' ){
+                return ( elTop > scTop );
+        }else{
+                return ( ( elBot <= scBot ) && ( elTop >= scTop ) );
+        }
+
+}
+
+function scrollByX(elem, x){
+
+        var elTop = parseInt( elem.css('top'), 10 );
+        elem.css( 'top', ( elTop + x ) + "px" );
+
+}
+
 
 //create jQuery Callbacks() to handle object events 
 $.Dispatch = function( id ) {
