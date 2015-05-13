@@ -663,6 +663,18 @@ var World = {
 						World.dir = vert + horz;
 					}
 				}
+               else if(k == World.TILE.SWAMP) {
+                   var dx = pos[0] - World.RADIUS, dy = pos[1] - World.RADIUS;
+                   var horz = dx < 0 ? 'west' : 'east';
+                   var vert = dy < 0 ? 'north' : 'south';
+                   if(Math.abs(dx) / 2 > Math.abs(dy)) {
+                       World.swamp_dir = horz;
+                   } else if(Math.abs(dy) / 2 > Math.abs(dx)){
+                       World.swamp_dir = vert;
+                   } else {
+                       World.swamp_dir = vert + horz;
+                   }
+               }
 			}
 		}
 		
