@@ -437,7 +437,7 @@ var Room = {
 			}
 		},
 		'compass': {
-			type: 'upgrade',
+			type: 'special',
 			maximum: 1,
 			cost: function() {
 				return { 
@@ -462,6 +462,8 @@ var Room = {
 			options
 		);
 		
+		Room.pathDiscovery = Boolean($SM.get('stores["compass"]'));
+
 		if(Engine._debug) {
 			this._ROOM_WARM_DELAY = 5000;
 			this._BUILDER_STATE_DELAY = 5000;
@@ -511,7 +513,7 @@ var Room = {
 		}).appendTo('div#roomPanel');
 		
 		// Create the stores container
-		$('<div>').attr('id', 'storesContainer').appendTo('div#roomPanel');
+		$('<div>').attr('id', 'storesContainer').prependTo('div#roomPanel');
 		
 		//subscribe to stateUpdates
 		$.Dispatch('stateUpdate').subscribe(Room.handleStateUpdates);
@@ -748,17 +750,33 @@ var Room = {
 	
 	updateStoresView: function() {
 		var stores = $('div#stores');
+	  var resources = $('div#resources');
+		var special = $('div#special');
 		var weapons = $('div#weapons');
-		var needsAppend = false, wNeedsAppend = false, newRow = false;
+		var needsAppend = false, rNeedsAppend = false, sNeedsAppend = false, wNeedsAppend = false, newRow = false;
 		if(stores.length === 0) {
 			stores = $('<div>').attr({
-				id: 'stores'
+				'id': 'stores',
+				'data-legend': _('stores')
 			}).css('opacity', 0);
 			needsAppend = true;
 		}
+		if(resources.length === 0) {
+			resources = $('<div>').attr({
+				id: 'resources'
+			}).css('opacity', 0);
+			rNeedsAppend = true;
+		}
+		if(special.length === 0) {
+			special = $('<div>').attr({
+				id: 'special'
+			}).css('opacity', 0);
+			sNeedsAppend = true;
+		}
 		if(weapons.length === 0) {
 			weapons = $('<div>').attr({
-				id: 'weapons'
+				'id': 'weapons',
+				'data-legend': _('weapons')
 			}).css('opacity', 0);
 			wNeedsAppend = true;
 		}
@@ -781,8 +799,11 @@ var Room = {
 			case 'weapon':
 				location = weapons;
 				break;
+			case 'special':
+				location = special;
+				break;
 			default:
-				location = stores;
+				location = resources;
 				break;
 			}
 			
@@ -827,8 +848,18 @@ var Room = {
 				$('div#' + row.attr('id') + ' > div.row_val', location).text(Math.floor(num));
 			}
 		}
+				
+		if(rNeedsAppend && resources.children().length > 0) {
+			resources.prependTo(stores);
+			resources.animate({opacity: 1}, 300, 'linear');
+		}
 		
-		if(needsAppend && stores.children().length > 0) {
+		if(sNeedsAppend && special.children().length > 0) {
+			special.appendTo(stores);
+			special.animate({opacity: 1}, 300, 'linear');
+		}
+		
+		if(needsAppend && stores.find('div.storeRow').length > 0) {
 			stores.appendTo('div#storesContainer');
 			stores.animate({opacity: 1}, 300, 'linear');
 		}
@@ -845,10 +876,16 @@ var Room = {
 		if($("div#outsidePanel").length) {
 			Outside.updateVillage();
 		}
+
+		if($SM.get('stores.compass') && !Room.pathDiscovery){
+			Room.pathDiscovery = true;
+			Path.openPath();
+		}
 	},
 	
 	updateIncomeView: function() {
-		var stores = $('div#stores');
+		var stores = $('div#resources');
+		var totalIncome = {};
 		if(stores.length === 0 || typeof $SM.get('income') == 'undefined') return;
 		$('div.storeRow', stores).each(function(index, el) {
 			el = $(el);
@@ -864,10 +901,18 @@ var Room = {
 							.addClass('row_val')
 							.text(Engine.getIncomeMsg(income.stores[store], income.delay))
 							.appendTo(tt);
+						if (!totalIncome[store] || totalIncome[store].income === undefined) {
+							totalIncome[store] = { income: 0 };
+						}
+						totalIncome[store].income += Number(income.stores[store]);
+						totalIncome[store].delay = income.delay;
 					}
 				}
 			}
 			if(tt.children().length > 0) {
+				var total = totalIncome[storeName].income;
+				$('<div>').addClass('total row_key').text(_('total')).appendTo(tt);
+				$('<div>').addClass('total row_val').text(Engine.getIncomeMsg(total, totalIncome[storeName].delay)).appendTo(tt);
 				tt.appendTo(el);
 			}
 		});
@@ -898,10 +943,6 @@ var Room = {
 		Notifications.notify(Room, good.buildMsg);
 		
 		$SM.add('stores["'+thing+'"]', 1);
-		
-		if(thing == 'compass') {
-			Path.openPath();
-		}
 	},
 	
 	build: function(buildBtn) {
@@ -1010,21 +1051,21 @@ var Room = {
 		var buildSection = $('#buildBtns');
 		var needsAppend = false;
 		if(buildSection.length === 0) {
-			buildSection = $('<div>').attr('id', 'buildBtns').css('opacity', 0);
+			buildSection = $('<div>').attr({'id': 'buildBtns', 'data-legend': _('build:')}).css('opacity', 0);
 			needsAppend = true;
 		}
 		
 		var craftSection = $('#craftBtns');
 		var cNeedsAppend = false;
 		if(craftSection.length === 0 && $SM.get('game.buildings["workshop"]', true) > 0) {
-			craftSection = $('<div>').attr('id', 'craftBtns').css('opacity', 0);
+			craftSection = $('<div>').attr({'id': 'craftBtns', 'data-legend': _('craft:')}).css('opacity', 0);
 			cNeedsAppend = true;
 		}
 		
 		var buySection = $('#buyBtns');
 		var bNeedsAppend = false;
 		if(buySection.length === 0 && $SM.get('game.buildings["trading post"]', true) > 0) {
-			buySection = $('<div>').attr('id', 'buyBtns').css('opacity', 0);
+			buySection = $('<div>').attr({'id': 'buyBtns', 'data-legend': _('buy:')}).css('opacity', 0);
 			bNeedsAppend = true;
 		}
 		
@@ -1105,6 +1146,12 @@ var Room = {
 		if(bNeedsAppend && buildSection.children().length > 0) {
 			buySection.appendTo('div#roomPanel').animate({opacity: 1}, 300, 'linear');
 		}
+	},
+	
+	compassTooltip: function(direction){
+		var tt = $('<div>').addClass('tooltip bottom right');
+		$('<div>').addClass('row_key').text(_('the compass points '+ direction)).appendTo(tt);
+		tt.appendTo($('#row_compass'));
 	},
 	
 	handleStateUpdates: function(e){

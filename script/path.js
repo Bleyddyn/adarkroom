@@ -34,7 +34,7 @@ var Path = {
 			.appendTo('div#locationSlider');
 		
 		// Add the outfitting area
-		var outfitting = $('<div>').attr('id', 'outfitting').appendTo(this.panel);
+		var outfitting = $('<div>').attr({'id': 'outfitting', 'data-legend': _('supplies:')}).appendTo(this.panel);
 		$('<div>').attr('id', 'bagspace').appendTo(outfitting);
 		
 		// Add the embark button
@@ -100,7 +100,7 @@ var Path = {
 			var needsAppend = false;
 			if(perks.length === 0) {
 				needsAppend = true;
-				perks = $('<div>').attr('id', 'perks');
+				perks = $('<div>').attr({'id': 'perks', 'data-legend': _('perks:')});
 			}
 			for(var k in $SM.get('character.perks')) {
 				var id = 'perk_' + k.replace(' ', '-');
@@ -113,7 +113,7 @@ var Path = {
 			}
 			
 			if(needsAppend && perks.children().length > 0) {
-				perks.appendTo(Path.panel);
+				perks.prependTo(Path.panel);
 			}
 			
 			if(!ignoreStores && Engine.activeModule === Path) {
@@ -175,6 +175,7 @@ var Path = {
 		}, Room.Craftables);
 		
 		for(var k in carryable) {
+			var lk = _(k);
 			var store = carryable[k];
 			var have = $SM.get('stores["'+k+'"]');
 			var num = Path.outfit[k];
@@ -191,18 +192,16 @@ var Path = {
 					outfit.children().each(function(i) {
 						var child = $(this);
 						if(child.attr('id').indexOf('outfit_row_') === 0) {
-							var cName = child.attr('id').substring(11).replace('-', ' ');
-							if(cName < k && (curPrev == null || cName > curPrev)) {
-								curPrev = cName;
+							var cName = child.children('.row_key').text();
+							if(cName < lk) {
+								curPrev = child.attr('id');
 							}
 						}
 					});
 					if(curPrev == null) {
 						row.insertAfter(wRow);
-					} 
-					else 
-					{
-						row.insertAfter(outfit.find('#outfit_row_' + curPrev.replace(' ', '-')));
+					} else {
+						row.insertAfter(outfit.find('#' + curPrev));
 					}
 				} else {
 					$('div#' + row.attr('id') + ' > div.row_val > span', outfit).text(num);

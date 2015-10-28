@@ -83,12 +83,12 @@ div#header {
 
 span.customSelectOptions {
 	margin: 0;
-	width: 80px;
+	width: 120px;
 }
 
 .customSelectOptions > ul {
 	max-height: 20px;
-	width: 80px;
+	width: 120px;
 	overflow: hidden;
 	-webkit-transition: max-height 1s;
 	transition: max-height 1s;
@@ -97,11 +97,10 @@ span.customSelectOptions {
 	bottom: 0;
 	position: absolute;
 	right: 0;
-	background-color: white;
 }
 
 .customSelectOptions > ul:hover {
-	max-height: 400px;
+	max-height: 600px;
 }
 
 .customSelectOptions > ul > li {
@@ -182,6 +181,10 @@ div.row_val {
 	float: right;
 }
 
+div.total {
+	font-weight: bold;
+}
+
 /* Notifications */
 
 div#notifications {
@@ -258,7 +261,7 @@ div.button div.cooldown {
 .upBtn, .dnBtn, .upManyBtn, .dnManyBtn {
 	position: absolute;
 	width: 14px;
-	height: 15px;
+	height: 12px;
 	cursor: pointer;
 }
 
@@ -288,7 +291,7 @@ div.button div.cooldown {
 	content: " ";
 	height: 0;
 	width: 0;
-	bottom: 4px;
+	bottom: 2px;
 }
 
 .upBtn:after, .upManyBtn:after {
@@ -318,7 +321,7 @@ div.button div.cooldown {
 	content: " ";
 	height: 0;
 	width: 0;
-	top: 4px;
+	top: 2px;
 }
 
 /* Overall size of buttons controlled by this style
@@ -506,6 +509,10 @@ body.noMask #description {
 
 #description > div {
 	padding-bottom: 20px;
+}
+
+.take-all-button {
+	float: none;
 }
 
 #buttons > .button {

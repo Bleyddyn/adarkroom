@@ -28,16 +28,18 @@ var StateManager = {
 
 		//create categories
 		var cats = [
-			'features',     //big features like buildings, location availability, unlocks, etc
-			'stores',       //little stuff, items, weapons, etc
-			'character',    //this is for player's character stats such as perks
+			'features',     // big features like buildings, location availability, unlocks, etc
+			'stores',       // little stuff, items, weapons, etc
+			'character',    // this is for player's character stats such as perks
 			'income',
 			'timers',
-			'game',         //mostly location related: fire temp, workers, population, world map, etc
-			'playStats',    //anything play related: play time, loads, etc
+			'game',         // mostly location related: fire temp, workers, population, world map, etc
+			'playStats',    // anything play related: play time, loads, etc
 			'previous',     // prestige, score, trophies (in future), achievements (again, not yet), etc
-			'outfit',           // used to temporarily store the items to be taken on the path
-			'config'
+			'outfit',      	// used to temporarily store the items to be taken on the path
+			'config',
+			'wait',			// mysterious wanderers are coming back
+			'cooldown'      // residual values for cooldown buttons
 		];
 
 		for(var which in cats) {
@@ -185,6 +187,21 @@ var StateManager = {
 		} catch (e) {
 			//it didn't exist in the first place
 			Engine.log('WARNING: Tried to remove non-existant state \''+stateName+'\'.');
+		}
+		if(!noEvent){
+			Engine.saveGame();
+			$SM.fireUpdate(stateName);
+		}
+	},
+
+	removeBranch: function(stateName, noEvent) {
+		for(var i in $SM.get(stateName)){
+			if(typeof $SM.get(stateName)[i] == 'object'){
+				$SM.removeBranch(stateName +'["'+ i +'"]');
+			}
+		}
+		if($.isEmptyObject($SM.get(stateName))){
+			$SM.remove(stateName);
 		}
 		if(!noEvent){
 			Engine.saveGame();
@@ -407,6 +424,7 @@ var StateManager = {
 		case 'tool':
 		case 'weapon':
 		case 'upgrade':
+		case 'special':
 			return $SM.get('stores["'+name+'"]', true);
 		case 'building':
 			return $SM.get('game.buildings["'+name+'"]', true);
